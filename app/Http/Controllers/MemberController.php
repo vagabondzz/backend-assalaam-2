@@ -42,6 +42,7 @@ class MemberController extends Controller
             'MEMBER_KTP_NO'         => 'nullable|string',
             'MEMBER_SEX'            => 'nullable|integer|in:0,1',
             'MEMBER_IS_WNI'         => 'nullable|integer|in:0,1',
+            'MEMBER_IS_MARRIED'     => 'nullable|integer|in:0,1',
             'MEMBER_RT'             => 'nullable|string',
             'MEMBER_RW'             => 'nullable|string',
             'MEMBER_KELURAHAN'      => 'nullable|string',
@@ -99,6 +100,7 @@ class MemberController extends Controller
                     'MEMBER_KELURAHAN'      => $data['MEMBER_KELURAHAN'] ?? null,
                     'MEMBER_KECAMATAN'      => $data['MEMBER_KECAMATAN'] ?? null,
                     'MEMBER_KOTA'           => $data['MEMBER_KOTA'] ?? null,
+                    'MEMBER_IS_MARRIED'     => $data['MEMBER_IS_MARRIED'] ?? null,
                     'MEMBER_POST_CODE'      => $data['MEMBER_POST_CODE'] ?? null,
                     'MEMBER_ADDRESS'        => $data['MEMBER_ADDRESS'] ?? null,
                     'MEMBER_JML_TANGGUNGAN' => $data['MEMBER_JML_TANGGUNGAN'] ?? 0,
@@ -246,7 +248,8 @@ class MemberController extends Controller
             'MEMBER_IS_VALID'       => $member->MEMBER_IS_VALID,
             'MEMBER_ACTIVE_FROM'    => $member->MEMBER_ACTIVE_FROM,
             'MEMBER_ACTIVE_TO'      => $member->MEMBER_ACTIVE_TO,
-            'MEMBER_KUPON'          => $member->MEMBER_KUPON
+            'MEMBER_KUPON'          => $member->MEMBER_KUPON,
+            'USER_CREATE'           => 'web',
         ];
 
         Log::info('Member ditemukan', [
@@ -291,6 +294,69 @@ public function getMemberTransactions($memberId)
         return response()->json([
             'error' => true,
             'message' => $e->getMessage(),
+        ], 500);
+    }
+}
+
+public function updateProfile(Request $request)
+{
+    // validasi request yang masuk
+    $validated = $request->validate([
+        'MEMBER_ID'             => 'required|string',
+        'MEMBER_ADDRESS'        => 'nullable|string|max:255',
+        'MEMBER_TELP'           => 'nullable|string|max:20',
+        'MEMBER_RT'             => 'nullable|integer',
+        'MEMBER_KTP_NO'         => 'nullable|integer',
+        'MEMBER_RW'             => 'nullable|integer',
+        'MEMBER_IS_WNI'         => 'nullable|integer|in:0,1',
+        'MEMBER_KELURAHAN'      => 'nullable|string|max:50',
+        'MEMBER_KECAMATAN'      => 'nullable|string|max:50',
+        'MEMBER_IS_MARRIED'     => 'nullable|integer|in:0,1',
+        'MEMBER_KOTA'           => 'nullable|string|max:50',
+        'MEMBER_POST_CODE'      => 'nullable|integer',
+        'MEMBER_NPWP'           => 'nullable|string|max:50',
+        'MEMBER_JML_TANGGUNGAN' => 'nullable|integer',
+        'MEMBER_PENDAPATAN'     => 'nullable|numeric',
+        'USER_CREATE'           => 'nullable|string'
+    ]);
+
+    try {
+        $profil = DB::connection('sqlsrv') 
+            ->table('MEMBER')
+            ->where('MEMBER_ID', $validated['MEMBER_ID'])
+            ->first();
+
+        if (!$profil) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Profil member tidak ditemukan di SQL Server'
+            ], 404);
+        }
+
+        // update profil di SQL Server
+        DB::connection('sqlsrv')
+            ->table('MEMBER')
+            ->where('MEMBER_ID', $validated['MEMBER_ID'])
+            ->update(array_merge(
+                collect($validated)->except(['MEMBER_ID'])->toArray(),
+                [
+                    'DATE_MODIFY' => now(),
+                    'USER_CREATE' => $request->input('USER_CREATE', 'web')
+                ]
+            ));
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Profil member berhasil diperbarui di SQL Server'
+        ]);
+    } catch (\Exception $e) {
+        Log::error('Gagal update profil member di SQL Server', [
+            'message' => $e->getMessage()
+        ]);
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Terjadi kesalahan saat update profil di SQL Server'
         ], 500);
     }
 }

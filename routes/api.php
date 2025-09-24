@@ -37,6 +37,7 @@ Route::group([
     Route::post('/validate', [MemberController::class, 'activate']);
     Route::post('/active', [MemberController::class, 'updateActivation']);
     Route::get('/{memberId}/transactions', [MemberController::class, 'getMemberTransactions']);
+    Route::put('/update-profile', [MemberController::class, 'updateProfile']);
 });
 
 Route::group([

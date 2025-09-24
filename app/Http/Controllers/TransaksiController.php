@@ -38,7 +38,7 @@ class TransaksiController extends Controller
                 'member_name' => $t->member?->MEMBER_NAME ?? '-',
                 'member_card_no' => $t->member?->MEMBER_CARD_NO ?? '-',
                 'trans_total' => $t->TRANS_TOTAL_TRANSACTION,
-                'trans_poin' => $t->trans_poin_member ?? 0,
+                'trans_poin' => $t->TRANS_POIN_PAS ?? 0,
             ];
         });
 
@@ -77,7 +77,7 @@ class TransaksiController extends Controller
                 'member_name' => $transaksi->member?->MEMBER_NAME ?? '-',
                 'member_card_no' => $transaksi->member?->MEMBER_CARD_NO ?? '-',
                 'trans_total' => $transaksi->TRANS_TOTAL_TRANSACTION,
-                'trans_poin' => $transaksi->trans_poin_member ?? 0,
+                'trans_poin' => $transaksi->TRANS_POIN_PAS ?? 0,
             ],
         ]);
     }
